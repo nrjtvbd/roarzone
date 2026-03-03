@@ -1,0 +1,32 @@
+name: Update Roarzone Playlist
+
+on:
+  schedule:
+    - cron: '0 * * * *' # প্রতি ১ ঘণ্টা পর পর রান হবে
+  workflow_dispatch: # ম্যানুয়ালি রান করার অপশন
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Scraper
+        run: python update_roarzone.py
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add playlist.m3u8
+          git commit -m "Auto-update Roarzone tokens"
+          git push
