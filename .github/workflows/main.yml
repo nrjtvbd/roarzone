@@ -3,14 +3,13 @@ name: Update Roarzone Playlist
 on:
   schedule:
     - cron: '*/30 * * * *' # প্রতি ৩০ মিনিট পর পর চলবে
-  workflow_dispatch: # ম্যানুয়ালি রান করার জন্য
-
-permissions:
-  contents: write # এটি না থাকলে গিটহাব ফাইল সেভ করতে পারবে না
+  workflow_dispatch: # আপনি নিজে রান করতে পারবেন
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # স্ক্রিপ্টকে ফাইল লেখার অনুমতি দেয়
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,5 +30,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add playlist.m3u
-          git commit -m "Auto-update token: $(date)" || echo "No changes to commit"
+          git commit -m "Auto-update playlist: $(date)" || echo "No changes to commit"
           git push
