@@ -1,41 +1,44 @@
 import requests
 import re
-import json
 
-def get_roarzone_link(channel_slug):
-    # Roarzone এর মূল পেজ যেখানে প্লেয়ার থাকে
-    page_url = f"https://tv.roarzone.info/"
-    
+def get_roarzone_token():
+    # Roarzone এর পেজ থেকে লেটেস্ট টোকেন খোঁজা
+    url = "https://tv.roarzone.info/"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
-        'Referer': 'https://tv.roarzone.info/',
-        'Accept': '*/*'
+        'Referer': 'https://tv.roarzone.info/'
     }
-
     try:
-        # ১. প্রথমে পেজটি লোড করা হচ্ছে ভেতরের স্ক্রিপ্ট থেকে লিঙ্ক খোঁজার জন্য
-        response = requests.get(page_url, headers=headers, timeout=10)
-        content = response.text
+        response = requests.get(url, headers=headers, timeout=10)
+        # রেগুলার এক্সপ্রেশন দিয়ে টোকেন অংশটি বের করা
+        token_match = re.search(r'token=([a-zA-Z0-9-]+)', response.text)
+        if token_match:
+            return token_match.group(1)
+    except:
+        pass
+    return None
 
-        # ২. রেগুলার এক্সপ্রেশন ব্যবহার করে 'index.m3u8?token=...' অংশটি খুঁজে বের করা
-        # Roarzone সাধারণত তাদের সোর্স কোডে বা কোনো JS ফাইলে এই লিঙ্কটি রাখে
-        pattern = r'https://[\w\d\.-]+:8447/[\w\d\.-/]+index\.m3u8\?token=[\w\d-]+'
-        links = re.findall(pattern, content)
+def create_m3u_file():
+    token = get_roarzone_token()
+    if not token:
+        print("Token not found!")
+        return
 
-        if links:
-            # যদি একাধিক লিঙ্ক থাকে, তবে আপনার কাঙ্ক্ষিত চ্যানেলটি (যেমন star-sports-1) ফিল্টার করা
-            for link in links:
-                if channel_slug in link:
-                    return link
-            return links[0] # কিছু না পেলে প্রথম লিঙ্কটিই দিবে
-        else:
-            return "No link found. Server might be using advanced protection."
+    # আপনার চ্যানেলের লিস্ট (উদাহরণস্বরূপ কয়েকটি দেওয়া হলো)
+    channels = [
+        {"name": "STAR SPORTS 1 HD", "id": "star-sports-1"},
+        {"name": "STAR SPORTS 2 HD", "id": "star-sports-2"},
+        {"name": "T-SPORTS HD", "id": "t-sports-hd"}
+    ]
 
-    except Exception as e:
-        return f"Error: {str(e)}"
+    # playlist.m3u ফাইল তৈরি করা
+    with open("playlist.m3u", "w", encoding="utf-8") as f:
+        f.write("#EXTM3U\n")
+        for ch in channels:
+            # Roarzone এর ফরম্যাট অনুযায়ী লিঙ্ক তৈরি
+            stream_url = f"https://edge2.roarzone.info:8447/roarzone/edge2/{ch['id']}/index.m3u8?token={token}"
+            f.write(f"#EXTINF:-1, {ch['name']}\n")
+            f.write(f"{stream_url}\n")
 
-# উদাহরণ হিসেবে Star Sports 1 এর লিঙ্ক বের করা
-channel_id = "star-sports-1"
-final_link = get_roarzone_link(channel_id)
-
-print(f"Updated M3U8 Link: {final_link}")
+if __name__ == "__main__":
+    create_m3u_file()
