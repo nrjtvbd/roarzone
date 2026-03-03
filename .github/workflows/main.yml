@@ -27,8 +27,9 @@ jobs:
 
       - name: Commit and Push
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add playlist.m3u
-          git commit -m "Auto-update playlist: $(date)" || echo "No changes to commit"
+          # যদি কোনো পরিবর্তন না থাকে তবুও জোর করে পুশ করার জন্য
+          git commit -m "Auto-update: $(date)" || exit 0 
           git push
