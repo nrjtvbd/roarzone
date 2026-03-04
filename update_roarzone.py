@@ -1,53 +1,43 @@
 import requests
 import re
 import json
-import random
-import time
+import base64
 
 def get_token():
     url = "https://tv.roarzone.info/"
-    
-    # বিভিন্ন ধরণের ব্রাউজার হেডার যা একেক বার একেক রকম দেখাবে
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-    ]
-
     headers = {
-        'User-Agent': random.choice(user_agents),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://www.google.com/', # গুগল থেকে আসছে বলে মনে হবে
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Referer': 'https://tv.roarzone.info/'
     }
     
     try:
-        session = requests.Session()
-        # সাইটে যাওয়ার আগে একটু সময় নেওয়া (মানুষের মতো আচরণ)
-        time.sleep(random.uniform(1, 3))
-        
-        response = session.get(url, headers=headers, timeout=20)
-        
-        # HTML এর ভেতরে টোকেন খোঁজার জন্য ৪টি আলাদা পদ্ধতি
+        response = requests.get(url, headers=headers, timeout=20)
+        html = response.text
+
+        # ১. সাধারণ রেগুলার এক্সপ্রেশন (আবার চেষ্টা)
         patterns = [
-            r'token=([a-zA-Z0-9\._-]+)',
+            r'token=([a-zA-Z0-9\._-]{20,})',
             r'["\']token["\']\s*[:=]\s*["\']([a-zA-Z0-9\._-]+)["\']',
-            r'token\s*=\s*[\'"](.*?)[\'"]',
-            r'id=["\']token["\']\s+value=["\'](.*?)["\']'
+            r'[\?&]token=([^"\'&\s>]+)'
         ]
         
         for pattern in patterns:
-            match = re.search(pattern, response.text)
+            match = re.search(pattern, html)
             if match:
                 return match.group(1)
-        
-        # যদি টোকেন না পায় তবে লগের জন্য পেজের কিছু অংশ প্রিন্ট করা
-        print("Debug: Page title -", re.search(r'<title>(.*?)</title>', response.text).group(1) if '<title>' in response.text else "No title")
+
+        # ২. প্লেয়ার আইফ্রেম (iframe) থেকে টোকেন খোঁজা
+        # আপনার পাঠানো HTML-এ 'player.php?stream=...' ছিল
+        iframe_match = re.search(r'src=["\']player\.php\?stream=([^"\'\s>]+)["\']', html)
+        if iframe_match:
+            # যদি আইফ্রেম থাকে, তবে প্লেয়ার পেজটি ভিজিট করে টোকেন আনা
+            player_url = f"https://tv.roarzone.info/player.php?stream={iframe_match.group(1)}"
+            player_res = requests.get(player_url, headers=headers, timeout=10)
+            token_in_player = re.search(r'token=([a-zA-Z0-9\._-]{20,})', player_res.text)
+            if token_in_player:
+                return token_in_player.group(1)
+
         return None
-        
     except Exception as e:
         print(f"Error: {e}")
         return None
@@ -55,12 +45,11 @@ def get_token():
 def main():
     token = get_token()
     if not token:
-        print("❌ Token not found! Server is still blocking.")
+        print("❌ Still No Token! Site is hiding it very well.")
         return
 
-    print(f"✅ Token Found: {token}")
+    print(f"✅ Success! Token Found: {token}")
 
-    # আপনার প্রয়োজনীয় আইডিগুলো
     channels = [
         {"id": "edge2/tsports", "title": "T Sports", "cat": "sports"},
         {"id": "edge2/star-sports-1", "title": "Star Sports 1", "cat": "sports"},
@@ -69,19 +58,19 @@ def main():
         {"id": "bk/15", "title": "Sa Tv", "cat": "bangla"}
     ]
 
-    json_output = {"status": "success", "response": []}
+    # ফাইল আপডেট লজিক
+    m3u_content = "#EXTM3U\n"
+    json_data = {"status": "success", "response": []}
 
-    with open("RoarZone.m3u", "w", encoding="utf-8") as m3u:
-        m3u.write("#EXTM3U\n")
-        for ch in channels:
-            final_url = f"https://edge2.roarzone.info:8447/roarzone/{ch['id']}/index.m3u8?token={token}"
-            m3u.write(f"#EXTINF:-1, {ch['title']}\n{final_url}\n")
-            json_output["response"].append({"title": ch['title'], "url": final_url, "category": ch['cat']})
+    for ch in channels:
+        url = f"https://edge2.roarzone.info:8447/roarzone/{ch['id']}/index.m3u8?token={token}"
+        m3u_content += f"#EXTINF:-1, {ch['title']}\n{url}\n"
+        json_data["response"].append({"title": ch['title'], "url": url, "category": ch['cat']})
 
-    with open("RoarZone_data.json", "w", encoding="utf-8") as jf:
-        json.dump(json_output, jf, indent=2)
-
-    print("✅ Files generated successfully!")
+    with open("RoarZone.m3u", "w", encoding="utf-8") as f: f.write(m3u_content)
+    with open("RoarZone_data.json", "w", encoding="utf-8") as f: json.dump(json_data, f, indent=2)
+    
+    print("✅ Files Updated Successfully!")
 
 if __name__ == "__main__":
     main()
