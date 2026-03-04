@@ -29,6 +29,6 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
-          git add playlist.m3u
-          git commit -m "Auto Update RoarZone" || exit 0
+          git add RoarZone.m3u RoarZone_data.json  # এই লাইনটি ঠিকভাবে লিখুন
+          git commit -m "Auto Update RoarZone Playlist" || exit 0
           git push
