@@ -1,23 +1,23 @@
-name: Update Roarzone Playlist
+name: RoarZone Update
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # প্রতি ৩০ মিনিট পর পর চলবে
-  workflow_dispatch: # আপনি নিজে রান করতে পারবেন
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # স্ক্রিপ্টকে ফাইল লেখার অনুমতি দেয়
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: pip install requests
@@ -27,9 +27,8 @@ jobs:
 
       - name: Commit and Push
         run: |
-          git config --local user.email "action@github.com"
+          git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Action"
           git add playlist.m3u
-          # যদি কোনো পরিবর্তন না থাকে তবুও জোর করে পুশ করার জন্য
-          git commit -m "Auto-update: $(date)" || exit 0 
+          git commit -m "Auto Update RoarZone" || exit 0
           git push
