@@ -3,6 +3,9 @@ import re
 import json
 import os
 
+# --- CONFIGURATION ---
+AUTH_KEY = "Rayhan52247S"  # প্লেলিস্টের লিঙ্কের সিকিউরিটির জন্য
+
 def get_token():
     url = "https://tv.roarzone.info/"
     headers = {
@@ -31,8 +34,6 @@ def extract_channels_from_file(filename):
     with open(filename, 'r', encoding='utf-8') as f:
         content = f.read()
         
-    # HTML theke data-stream, data-title ebong data-tags extract korar regex
-    # Ei pattern-ti apnar deya roarzone.txt file-er structure-er sathe mil kora
     pattern = r'data-title="([^"]+)"\s+data-tags="([^"]+)"\s+data-stream="([^"]+)"'
     matches = re.findall(pattern, content)
 
@@ -40,7 +41,7 @@ def extract_channels_from_file(filename):
         title, cat, stream_id = match
         channels.append({
             "id": stream_id,
-            "title": title.title(), # Title case kore deya
+            "title": title.title(),
             "cat": cat
         })
     return channels
@@ -51,7 +52,6 @@ def main():
         print("❌ Token find korte somossya hochchhe!")
         return
 
-    # Sorasori txt file theke channel list toiri kora hochchhe
     channels = extract_channels_from_file("roarzone.txt")
     
     if not channels:
@@ -66,13 +66,11 @@ def main():
     }
 
     for ch in channels:
-        # Protiti channel-er sothik URL format
-        url = f"https://edge2.roarzone.info:8447/roarzone/{ch['id']}/index.m3u8?token={token}"
+        # লিঙ্কের শেষে key= যোগ করা হয়েছে
+        url = f"https://edge2.roarzone.info:8447/roarzone/{ch['id']}/index.m3u8?token={token}&key={AUTH_KEY}"
         
-        # M3U Playlist update
         m3u_content += f"#EXTINF:-1, {ch['title']}\n{url}\n"
         
-        # JSON structure update
         json_data["response"].append({
             "id": ch['id'],
             "title": ch['title'],
@@ -80,7 +78,6 @@ def main():
             "category": ch['cat']
         })
 
-    # File save kora
     with open("RoarZone.m3u", "w", encoding="utf-8") as f: f.write(m3u_content)
     with open("RoarZone_data.json", "w", encoding="utf-8") as f: json.dump(json_data, f, indent=2)
     
