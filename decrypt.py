@@ -3,41 +3,48 @@ import os
 import shutil
 
 # --- CONFIGURATION ---
-zip_filename = 'roarzone_main.zip'  # আপনার জিপ ফাইলের নাম
-extract_folder = 'temp_roar'        # যেখানে ফাইল আনজিপ হবে
-zip_password = os.getenv("ZIP_PASS") # গিটহাব সিক্রেট থেকে পাসওয়ার্ড নেবে
+zip_filename = 'roarzone_main.zip'
+extract_folder = 'temp_roar'
+zip_password = os.getenv("ZIP_PASS")
 
 def main():
     if not zip_password:
-        print("❌ Error: ZIP_PASS environment variable is not set in GitHub Secrets.")
+        print("❌ Error: ZIP_PASS not set.")
         return
 
     try:
-        # জিপ ফাইলটি পাসওয়ার্ড দিয়ে আনজিপ করা
+        # ১. জিপ ফাইল আনজিপ করা
         with zipfile.ZipFile(zip_filename) as zf:
             zf.extractall(path=extract_folder, pwd=zip_password.encode('utf-8'))
-            print("✅ Successfully decrypted and extracted files.")
+            print("✅ Successfully decrypted files.")
 
-        # আনজিপ করা ফোল্ডার থেকে প্রধান স্ক্রিপ্টটি রান করা
+        # ২. আনজিপ করা ফোল্ডারে ঢুকে স্ক্রিপ্ট রান করা
+        original_dir = os.getcwd()
         script_path = os.path.join(extract_folder, "update_roarzone.py")
         
         if os.path.exists(script_path):
-            print(f"🚀 Running {script_path}...")
-            # বর্তমান ডিরেক্টরি সাময়িকভাবে পরিবর্তন করে রান করা যাতে পাথ এরর না হয়
             os.chdir(extract_folder)
             os.system("python update_roarzone.py")
-            os.chdir("..") 
+            
+            # ৩. তৈরি হওয়া আউটপুট ফাইলগুলো মেইন ডিরেক্টরিতে মুভ করা
+            # এখানে আপনার আউটপুট ফাইলগুলোর নাম নিশ্চিত করুন
+            output_files = ['RoarZone.m3u', 'RoarZone_data.json'] 
+            for f in output_files:
+                if os.path.exists(f):
+                    shutil.move(f, os.path.join(original_dir, f))
+            
+            os.chdir(original_dir)
+            print("🚀 Script execution and file moving complete.")
         else:
-            print(f"❌ Error: update_roarzone.py not found inside the zip!")
+            print("❌ Error: update_roarzone.py not found!")
 
     except Exception as e:
         print(f"❌ An error occurred: {e}")
     
     finally:
-        # নিরাপত্তার জন্য আনজিপ করা ফাইলগুলো মুছে ফেলা
         if os.path.exists(extract_folder):
             shutil.rmtree(extract_folder)
-            print("🧹 Cleanup done: Secret files removed.")
+            print("🧹 Cleanup done.")
 
 if __name__ == "__main__":
     main()
