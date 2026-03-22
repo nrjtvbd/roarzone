@@ -22,13 +22,15 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run Script
-        run: python update_roarzone.py
+      - name: Run Decrypt and Update
+        env:
+          ZIP_PASS: ${{ secrets.ZIP_PASS }}
+        run: python decrypt.py
 
-      - name: Commit and Push
+      - name: Commit and Push changes
         run: |
-          git config --local user.email "actions@github.com"
+          git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add RoarZone.m3u RoarZone_data.json  # এই লাইনটি ঠিকভাবে লিখুন
-          git commit -m "Auto Update RoarZone Playlist" || exit 0
+          git add RoarZone.m3u RoarZone_data.json
+          git commit -m "Auto Update RoarZone Playlist" || echo "No changes to commit"
           git push
