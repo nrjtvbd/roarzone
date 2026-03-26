@@ -31,6 +31,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add RoarZone.m3u RoarZone_data.json
-          git commit -m "Auto Update RoarZone Playlist" || echo "No changes to commit"
+          git add sys_config_cache_v9.m3u internal_data_v9.json
+          git commit -m "Update Secret Playlist"
           git push
+          
