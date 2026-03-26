@@ -3,7 +3,7 @@ import os
 import shutil
 
 # --- CONFIGURATION ---
-zip_filename = 'roarzone_main.zip'
+zip_filename = 'update_roarzone.zip'
 extract_folder = 'temp_roar'
 zip_password = os.getenv("ZIP_PASS")
 
