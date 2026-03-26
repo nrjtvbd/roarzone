@@ -2,14 +2,15 @@ name: RoarZone Update
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
-  workflow_dispatch:
+    - cron: '*/30 * * * *' # প্রতি ৩০ মিনিট পর পর চলবে
+  workflow_dispatch: # ম্যানুয়ালি রান করার অপশন
 
 jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,11 +28,12 @@ jobs:
           ZIP_PASS: ${{ secrets.ZIP_PASS }}
         run: python decrypt.py
 
-      - name: Commit and Push changes
+      - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add sys_config_cache_v9.m3u internal_data_v9.json
-          git commit -m "Update Secret Playlist"
+          # সব নতুন বা পরিবর্তিত ফাইল (sys_config_cache_v9.m3u, internal_data_v9.json) একসাথে অ্যাড করবে
+          git add -A
+          # পরিবর্তন থাকলে কমিট করবে, না থাকলে স্কিপ করবে
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update encrypted assets: $(date)"
           git push
-          
