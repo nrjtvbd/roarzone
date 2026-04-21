@@ -27,7 +27,7 @@ jobs:
       - name: Run script
         env:
           API_URL: ${{ secrets.API_URL }}
-        run: python Script/RoarZone.py
+        run: python Script/update_roarzone.py
 
       - name: Commit & Push
         run: |
