@@ -1,38 +1,41 @@
-name: Generate RoarZone Playlist
+name: RoarZone Real-Time Update
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Protis 30 minute por por cholbe
-  workflow_dispatch: # Manually run korar jonno
-
-permissions:
-  contents: write
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+    
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install selenium selenium-wire webdriver-manager blinker==1.7.0
 
-      - name: Run script
-        env:
-          API_URL: ${{ secrets.API_URL }}
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Run Update Script
         run: python Script/RoarZone.py
 
-      - name: Commit & Push
+      - name: Commit and Push
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add sys_config_cache_v9.m3u internal_data_v9.json
-          git commit -m "🔄 Auto update RoarZone playlist" || echo "No changes"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Auto update fresh token: $(date)" || echo "No changes"
           git push
