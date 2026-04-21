@@ -19,7 +19,8 @@ jobs:
         run: |
           pip install undetected-chromedriver requests
           sudo apt-get update
-          sudo apt-get install -y xvfb libxi6 libgconf-2-4 google-chrome-stable
+          # libgconf-2-4 বাদ দেওয়া হয়েছে
+          sudo apt-get install -y xvfb libxi6 google-chrome-stable
 
       - name: Run Script with Virtual Display
         run: |
