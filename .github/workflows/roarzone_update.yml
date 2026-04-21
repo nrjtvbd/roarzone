@@ -1,4 +1,4 @@
-name: RoarZone Daily Update
+name: RoarZone Ultimate Bypass
 
 on:
   schedule:
@@ -9,27 +9,26 @@ permissions:
   contents: write
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Requests
-        run: pip install requests
-
-      - name: Run Script
-        run: python Script/RoarZone.py
-
-      - name: Commit and Push
+      - name: Install Dependencies
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          pip install undetected-chromedriver requests
+          sudo apt-get update
+          sudo apt-get install -y xvfb libxi6 libgconf-2-4 google-chrome-stable
+
+      - name: Run Script with Virtual Display
+        run: |
+          xvfb-run --server-args="-screen 0 1920x1080x24" python Script/RoarZone.py
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
           git add -A
-          git commit -m "Refresh Stream Token: $(date)" || echo "No changes"
+          git commit -m "🔄 Refresh Token via Undetected Driver" || echo "No changes"
           git push
