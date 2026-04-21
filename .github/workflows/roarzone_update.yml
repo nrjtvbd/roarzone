@@ -1,16 +1,16 @@
-name: RoarZone Real-Time Update
+name: RoarZone Daily Update
 
 on:
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,16 +20,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          pip install selenium selenium-wire webdriver-manager blinker==1.7.0
+      - name: Install Requests
+        run: pip install requests
 
-      - name: Install Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
-
-      - name: Run Update Script
+      - name: Run Script
         run: python Script/RoarZone.py
 
       - name: Commit and Push
@@ -37,5 +31,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add -A
-          git commit -m "Auto update fresh token: $(date)" || echo "No changes"
+          git commit -m "Refresh Stream Token: $(date)" || echo "No changes"
           git push
