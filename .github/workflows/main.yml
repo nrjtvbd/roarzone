@@ -21,19 +21,16 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install requests cloudscraper
 
-      - name: Run Decrypt and Update
-        env:
-          ZIP_PASS: ${{ secrets.ZIP_PASS }}
-        run: python decrypt.py
+      - name: Run Update Script
+        run: python update_roarzone.py
 
       - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # সব নতুন বা পরিবর্তিত ফাইল (sys_config_cache_v9.m3u, internal_data_v9.json) একসাথে অ্যাড করবে
           git add -A
-          # পরিবর্তন থাকলে কমিট করবে, না থাকলে স্কিপ করবে
-          git diff --quiet && git diff --staged --quiet || git commit -m "Update encrypted assets: $(date)"
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update Roarzone: $(date)"
           git push
