@@ -14,22 +14,22 @@ CHANNELS = [
 ]
 
 def get_token_undetected():
-    print("🚀 Launching Undetected Chromedriver...")
+    print("🚀 Launching Undetected Chromedriver (Auto Version)...")
     
     options = uc.ChromeOptions()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    # আমরা হেডলেস মোড সরাসরি দেব না, ভার্চুয়াল ডিসপ্লে ব্যবহার করব
+    options.add_argument('--start-maximized')
     
     try:
-        driver = uc.Chrome(options=options, version_main=123) # আপনার ক্রোমের ভার্সন অনুযায়ী
+        # version_main না দিয়ে সরাসরি ট্রাই করা হচ্ছে যাতে অটো-ম্যাচ করে
+        driver = uc.Chrome(options=options)
         
         print("🌐 Visiting RoarZone Player...")
         driver.get("https://tv.roarzone.net/player.php?stream=tsports")
         
-        # ক্লাউডফ্লেয়ার চ্যালেঞ্জ সলভ হওয়ার জন্য পর্যাপ্ত সময় দিন
-        print("⏳ Waiting for Cloudflare Challenge (30s)...")
-        time.sleep(30)
+        print("⏳ Waiting for Cloudflare Challenge (40s)...")
+        time.sleep(40) # সময় একটু বাড়িয়ে দেওয়া হলো
         
         page_source = driver.page_source
         
@@ -44,7 +44,7 @@ def get_token_undetected():
             driver.quit()
             return tk
         else:
-            print("❌ Undetected Mode-এও টোকেন পাওয়া যায়নি।")
+            print("❌ Undetected Mode-এও টোকেন পাওয়া যায়নি। প্রোটেকশন অনেক কড়া।")
             driver.quit()
             
     except Exception as e:
@@ -66,7 +66,7 @@ def main():
 
     with open(M3U_FILE, "w", encoding="utf-8") as f: f.write("\n".join(m3u_lines))
     with open(JSON_FILE, "w", encoding="utf-8") as f: json.dump(json_payload, f, indent=2)
-    print("✅ Files Updated!")
+    print("✅ Files Updated on GitHub Environment!")
 
 if __name__ == "__main__":
     main()
