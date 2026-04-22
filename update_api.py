@@ -3,54 +3,53 @@ import re
 import json
 import os
 
-# আপনার চ্যানেলের তথ্য ও পাথ
-CHANNELS = [
-    {"name": "T Sports", "path": "edge2/tsports"},
-    {"name": "Gazi TV", "path": "edge1/gtv"}
-]
+# আপনার কাঙ্ক্ষিত বেস ইউআরএল এবং চ্যানেলের পাথ
+API_BASE_URL = "https://edge2.roarzone.net:444/roarzone"
+CHANNELS = {
+    "tsports": "edge2/tsports",
+    "gtv": "edge1/gtv",
+    "gazitv": "edge1/gtv" # উদাহরণস্বরূপ
+}
 
-def fetch_token():
-    # একদম আপনার ব্রাউজারের মতো হেডার ব্যবহার করছি
+def get_live_api():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
-        'Referer': 'https://tv.roarzone.net/',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Referer': 'https://tv.roarzone.net/'
     }
+    
     try:
-        # টোকেন সংগ্রহের জন্য প্লেয়ার পেজ রিকোয়েস্ট
-        res = requests.get("https://tv.roarzone.net/player.php?stream=tsports", headers=headers, timeout=20)
-        # রেগুলার এক্সপ্রেশন দিয়ে টোকেন খুঁজে বের করা
-        match = re.search(r'token=([a-zA-Z0-9\._-]{30,})', res.text)
-        return match.group(1) if match else None
-    except:
-        return None
-
-def main():
-    token = fetch_token()
-    if token:
-        print(f"✅ Token Found: {token[:15]}...")
+        # ১. টোকেন সংগ্রহ
+        response = requests.get("https://tv.roarzone.net/player.php?stream=tsports", headers=headers, timeout=15)
+        token_match = re.search(r'token=([a-zA-Z0-9\._-]{30,})', response.text)
         
-        api_data = {
-            "status": "success",
-            "channels": []
-        }
-
-        for ch in CHANNELS:
-            # ঠিক আপনার দেওয়া ফরম্যাট অনুযায়ী লিঙ্ক জেনারেট
-            finalUrl = f"https://edge2.roarzone.net:444/roarzone/{ch['path']}/tracks-v1a1/mono.m3u8?token={token}"
+        if token_match:
+            token = token_match.group(1)
+            print(f"✅ Token Found: {token[:10]}...")
             
-            api_data["channels"].append({
-                "name": ch["name"],
-                "url": finalUrl
-            })
-
-        with open('api.json', 'w') as f:
-            json.dump(api_data, f, indent=4)
-        print("🚀 API updated with your exact format!")
-    else:
-        # এটিই এখন আপনার এরর দিচ্ছে কারণ GitHub IP ব্লকড
-        print("❌ Token Fetch Failed. GitHub IP might be blocked by Cloudflare.")
+            # ২. আপনার ফরম্যাট অনুযায়ী JSON ডাটা তৈরি
+            api_output = {
+                "status": "success",
+                "last_updated": os.popen('date').read().strip(),
+                "links": {}
+            }
+            
+            for slug, path in CHANNELS.items():
+                # আপনার সেই নির্দিষ্ট ইউআরএল ফরম্যাট
+                final_api_url = f"{API_BASE_URL}/{path}/tracks-v1a1/mono.m3u8?token={token}"
+                api_output["links"][slug] = final_api_url
+            
+            # ৩. api.json ফাইলে সেভ করা
+            with open('api.json', 'w') as f:
+                json.dump(api_output, f, indent=4)
+            print("🚀 api.json generated successfully!")
+            return True
+        else:
+            print("⚠️ Token not found. GitHub IP restricted.")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
 
 if __name__ == "__main__":
-    main()
+    get_live_api()
