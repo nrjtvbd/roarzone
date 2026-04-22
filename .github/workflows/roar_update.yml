@@ -1,18 +1,17 @@
-name: RoarZone API Auto Update
+name: RoarZone API Update
 
 on:
   schedule:
-    - cron: '*/20 * * * *' # প্রতি ২০ মিনিট পর পর রান হবে
-  workflow_dispatch: # ইচ্ছা করলে যখন খুশি ম্যানুয়ালি রান করা যাবে
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # গিটহাবে ফাইল পুশ করার জন্য এই পারমিশন জরুরি
-
+      contents: write
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -23,17 +22,15 @@ jobs:
       - name: Install Requests
         run: pip install requests
 
-      - name: Run Script
-        run: python update_api.py # আপনার পাইথন ফাইলের নাম এখানে
+      - name: Run API Generator
+        run: python update_api.py
 
-      - name: Commit and Push Changes
+      - name: Commit & Push Changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           if [ -f api.json ]; then
             git add api.json
-            git commit -m "Automated API Update: $(date)" || exit 0
+            git commit -m "Update API Links $(date)" || exit 0
             git push
-          else
-            echo "⚠️ api.json was not created. Token fetch might have failed."
           fi
