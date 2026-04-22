@@ -30,6 +30,10 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add api.json
-          git commit -m "Automated API Update: $(date)" || exit 0
-          git push
+          if [ -f api.json ]; then
+            git add api.json
+            git commit -m "Automated API Update: $(date)" || exit 0
+            git push
+          else
+            echo "⚠️ api.json was not created. Token fetch might have failed."
+          fi
